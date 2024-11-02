@@ -1,0 +1,15 @@
+https://www.tradingview.com/chart/BTCUSDT/apX5cT5O-Sending-Tradingview-Alerts-Directly-To-Telegram/
+
+
+Channel Name : HFC TV ALERTS
+Channel Id : -1002402417006
+Bot Name : HFC Intraday WPR
+usrname : hfcwprintradaybot
+Bot Tokens : 7440470674:AAHNvVQP_SlPRq54SQmCaGBJHcEHgWUbHFs
+
+need to go to that bot and type /start
+
+alxuse.com/tv
+
+https://api.telegram.org/bot7440470674:AAHNvVQP_SlPRq54SQmCaGBJHcEHgWUbHFs/sendMessage
+

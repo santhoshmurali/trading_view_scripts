@@ -1,0 +1,100 @@
+// This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © santhoshmurali
+
+//@version=5
+indicator("HFC_HMA_BO_SCREENER_1","HMA_BO_SCREEN_1",overlay = true)
+
+ADANIENT                                                = input.string("NSE:ADANIENT","ADANIENT")
+ADANIPORTS                                              = input.string("NSE:ADANIPORTS","ADANIPORTS")
+APOLLOHOSP                                              = input.string("NSE:APOLLOHOSP","APOLLOHOSP")
+ASIANPAINT                                              = input.string("NSE:ASIANPAINT","ASIANPAINT")
+AXISBANK                                                = input.string("NSE:AXISBANK","AXISBANK")
+BAJAJ_AUTO                                              = input.string("NSE:BAJAJ_AUTO","BAJAJ_AUTO")
+BAJFINANCE                                              = input.string("NSE:BAJFINANCE","BAJFINANCE")
+BAJAJFINSV                                              = input.string("NSE:BAJAJFINSV","BAJAJFINSV")
+BEL                                                     = input.string("NSE:BEL","BEL")
+BPCL                                                    = input.string("NSE:BPCL","BPCL")
+BHARTIARTL                                              = input.string("NSE:BHARTIARTL","BHARTIARTL")
+BRITANNIA                                               = input.string("NSE:BRITANNIA","BRITANNIA")
+CIPLA                                                   = input.string("NSE:CIPLA","CIPLA")
+COALINDIA                                               = input.string("NSE:COALINDIA","COALINDIA")
+DRREDDY                                                 = input.string("NSE:DRREDDY","DRREDDY")
+EICHERMOT                                               = input.string("NSE:EICHERMOT","EICHERMOT")
+GRASIM                                                  = input.string("NSE:GRASIM","GRASIM")
+HCLTECH                                                 = input.string("NSE:HCLTECH","HCLTECH")
+HDFCBANK                                                = input.string("NSE:HDFCBANK","HDFCBANK")
+HDFCLIFE                                                = input.string("NSE:HDFCLIFE","HDFCLIFE")
+HEROMOTOCO                                              = input.string("NSE:HEROMOTOCO","HEROMOTOCO")
+HINDALCO                                                = input.string("NSE:HINDALCO","HINDALCO")
+HINDUNILVR                                              = input.string("NSE:HINDUNILVR","HINDUNILVR")
+ICICIBANK                                               = input.string("NSE:ICICIBANK","ICICIBANK")
+ITC                                                     = input.string("NSE:ITC","ITC")
+
+
+
+//All about HMA
+var grpHMA = "HMA"
+HMA_Length = input.int(250,"HMA Length", group = grpHMA)
+
+//All about Trading timoke
+var grpTradingTime = "Trading Time"
+start_hour  = input.int(9,"Strategy Start Hour",options = [9,10,11,12,13,14], group = grpTradingTime)
+start_min  = input.int(16,"Strategy Start Minute",options = [0,5,10,15,16,20,25,30,35,40,45,50,55],group = grpTradingTime)
+end_hour  = input.int(15,"Strategy End Hour",options = [10,11,12,13,14,15], group = grpTradingTime)
+end_min  = input.int(29,"Strategy End Minute",options = [0,5,10,15,20,25,29,30,35,40,45,50,55],group = grpTradingTime)
+
+strategy_start_time = timestamp(year, month, dayofmonth, start_hour, start_min)
+strategy_end_time = timestamp(year, month, dayofmonth, end_hour, end_min)
+
+// Current bar time
+current_time = time
+
+// Check if the current bar time is between the strategy start and end times
+in_trading_time = current_time >= strategy_start_time and current_time <= strategy_end_time
+
+fn_hma_bo(c,h,l,o,n) =>
+    HMA_ = ta.hma(c,n)
+    signal = 0
+    if HMA_[0] < HMA_[1] and ta.crossover(c,HMA_) and c > h[2] and c > o and in_trading_time
+        signal := 1
+    if HMA_[0] > HMA_[1] and ta.crossunder(c,HMA_) and c < l[2] and c < o and in_trading_time
+        signal := -1
+    signal
+
+fn_screener(_ticker) =>
+    message = ""
+    result = request.security(_ticker,timeframe.period,fn_hma_bo(close,high, low,open,HMA_Length))
+    if result == 1
+        message := '{"chat_id" : "-1002402417006","text":"HMA_BO - --'+_ticker+' is ready for Long"}'
+        alert(message,alert.freq_once_per_bar_close)
+    if result == -1
+        message := '{"chat_id" : "-1002402417006","text":"HMA_BO - --'+_ticker+' is ready for Short"}'
+        alert(message,alert.freq_once_per_bar_close)
+    result
+
+ADANIENT_SIGNAL                                     = fn_screener(ADANIENT)
+ADANIPORTS_SIGNAL                                   = fn_screener(ADANIPORTS)
+APOLLOHOSP_SIGNAL                                   = fn_screener(APOLLOHOSP)
+ASIANPAINT_SIGNAL                                   = fn_screener(ASIANPAINT)
+AXISBANK_SIGNAL                                     = fn_screener(AXISBANK)
+BAJAJ_AUTO_SIGNAL                                   = fn_screener(BAJAJ_AUTO)
+BAJFINANCE_SIGNAL                                   = fn_screener(BAJFINANCE)
+BAJAJFINSV_SIGNAL                                   = fn_screener(BAJAJFINSV)
+BEL_SIGNAL                                          = fn_screener(BEL)
+BPCL_SIGNAL                                         = fn_screener(BPCL)
+BHARTIARTL_SIGNAL                                   = fn_screener(BHARTIARTL)
+BRITANNIA_SIGNAL                                    = fn_screener(BRITANNIA)
+CIPLA_SIGNAL                                        = fn_screener(CIPLA)
+COALINDIA_SIGNAL                                    = fn_screener(COALINDIA)
+DRREDDY_SIGNAL                                      = fn_screener(DRREDDY)
+EICHERMOT_SIGNAL                                    = fn_screener(EICHERMOT)
+GRASIM_SIGNAL                                       = fn_screener(GRASIM)
+HCLTECH_SIGNAL                                      = fn_screener(HCLTECH)
+HDFCBANK_SIGNAL                                     = fn_screener(HDFCBANK)
+HDFCLIFE_SIGNAL                                     = fn_screener(HDFCLIFE)
+HEROMOTOCO_SIGNAL                                   = fn_screener(HEROMOTOCO)
+HINDALCO_SIGNAL                                     = fn_screener(HINDALCO)
+HINDUNILVR_SIGNAL                                   = fn_screener(HINDUNILVR)
+ICICIBANK_SIGNAL                                    = fn_screener(ICICIBANK)
+ITC_SIGNAL                                          = fn_screener(ITC)
+plot(na)

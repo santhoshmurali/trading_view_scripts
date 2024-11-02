@@ -1,0 +1,125 @@
+// This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © santhoshmurali
+
+//@version=5
+strategy("HFC_Pilot_SMA200_HMA100_PP", overlay=true, margin_long=100, margin_short=100)
+import TradingView/Strategy/3
+
+//@to het the daily data fordoing strat
+insidebar = request.security(syminfo.tickerid,"D",high[2] < high[3] and low[2]>low[3])
+
+var grp1 = "MASTER TREND"
+MASTER_SMA_TREND_LENGTH                             =   input.int(50,"Master Trend Length (SMA)", tooltip = "This is helpful to identify the Direction Bias" ,group = grp1)
+MASTER_SMA                                          =   ta.sma(close,MASTER_SMA_TREND_LENGTH)
+MASTER_LOOKBACK_PERIOD                              =   input.int(4,"Number consicutive times the master SMA is checked for HH or LL", group = grp1)
+
+var float Pivot_range                                     = na
+
+
+var grp2 = "Pivot point - for entry and carry f/w"
+PIVOT_PERIOD                                        =   input.int(2,"Pivot point period",tooltip = "Number of candles to consider to capture pivot high and pivot low")
+SHOW_PIVOT                                          =   input.bool(true,"Show Pivots")
+float ph                                            =   ta.pivothigh(PIVOT_PERIOD,PIVOT_PERIOD)
+float pl                                            =   ta.pivotlow(PIVOT_PERIOD,PIVOT_PERIOD)
+plotshape(ph and SHOW_PIVOT, text="H", style=shape.labeldown, color=na, textcolor=color.red, location=location.abovebar,  offset = -PIVOT_PERIOD)
+plotshape(pl and SHOW_PIVOT, text="L", style=shape.labeldown, color=na, textcolor=color.lime, location=location.belowbar,  offset = -PIVOT_PERIOD)
+
+float resistance                                    =   na
+float support                                       =   na
+support := pl ? pl : support[1]
+resistance := ph ? ph : resistance[1]
+
+
+plot(SHOW_PIVOT and support ? support : na, color = SHOW_PIVOT and support ? color.lime : na, style = plot.style_circles, offset = -PIVOT_PERIOD)
+plot(SHOW_PIVOT and resistance ? resistance : na, color = SHOW_PIVOT and resistance ? color.red : na, style = plot.style_circles, offset = -PIVOT_PERIOD)
+ 
+
+var grp3 = "Pullback Trend"
+PULL_BACK_HMA_TREND_LENGTH                          =   input.int(100,"HMA Length Pullback towards SMA",tooltip = "This is what will determine if price is in premium or discunt zone")
+PULL_BACK_HMA                                       =   ta.hma(close,PULL_BACK_HMA_TREND_LENGTH)
+PULLBACK_LOOKBACK_PERIOD                            =   input.int(4,"Number consicutive times the Pullback HMA is checked for HH or LL", group = grp3)
+
+// TRADE SET-UP 1
+// MASTER TREND HIGHER HIGH
+// PULLBACK TREND HIGHER HIGH
+// PRICE BREAKES OUT PIVOT HIGH WITH PIVOT LOW AS SL 
+fn_master_trnd_up(n) =>  // Function to check if Master SMA is trending higher
+    allHigher  = true
+    for i = 0 to n-2
+        if MASTER_SMA[i] <= MASTER_SMA[i+1] or close< MASTER_SMA[i]
+            allHigher := false
+    allHigher
+
+fn_pullback_trnd_up(n) =>  // Function to check if Pullback hma  is trending higher
+    allHigher  = true
+    for i = 0 to n-2
+        if PULL_BACK_HMA[i] <= PULL_BACK_HMA[i+1] or close< PULL_BACK_HMA[i]
+            allHigher := false
+    allHigher
+
+
+
+
+MASTER_TREND_UP                                     =   fn_master_trnd_up(MASTER_LOOKBACK_PERIOD)
+PULLBACK_HMA_TREND_UP                               =   fn_pullback_trnd_up(PULLBACK_LOOKBACK_PERIOD)
+PREV_DAY_INSIDE_BAR                                 =   insidebar
+
+
+if not na(resistance) and not na(support)
+    Pivot_range := (resistance-support)/support
+
+
+
+
+BuyCondition = ta.crossover(close,resistance) and PULLBACK_HMA_TREND_UP and MASTER_TREND_UP //and Pivot_range <= 0.015
+//BuyCondition = ta.crossover(close,resistance) and PULLBACK_HMA_TREND_UP and //and Pivot_range <= 0.015
+//label.new(bar_index,high,text= str.tostring(PREV_DAY_INSIDE_BAR) ,color = color.blue,textcolor = color.white)
+//BuyCondition = high>ph[1] and low < ph[1]
+
+// Check if there is an open position
+//isLong = strategy.position_size > 0
+
+// Define longStopPrice and longProfitPrice only when we enter a long position
+var float longStopPrice = na
+var float longStopPrice2 = na
+var float LongFirstProfit = na
+var float LongSecondProfit = na
+
+center_pivot = (resistance-support)/2
+
+if (BuyCondition)
+    
+
+    if(strategy.position_size==0)
+        label.new(bar_index,high,str.tostring(Pivot_range),color=color.blue, textcolor=color.white)
+        LongFirstProfit := resistance + (1*(resistance-support))
+        //LongSecondProfit := resistance + (2*(resistance-support))
+        //longStopPrice := resistance - center_pivot
+        //longStopPrice2 := resistance - center_pivot
+        longStopPrice := support
+        //longStopPrice2 := support
+        strategy.order("buy_current_resistance", strategy.long, qty = 2,limit = high)
+        strategy.exit("Exit on First Profit","buy_current_resistance",stop = longStopPrice,limit = LongFirstProfit, qty_percent = 100)
+        //strategy.exit("Exit on Second Profit","buy_current_resistance",stop = longStopPrice2,limit = LongSecondProfit, qty_percent = 50)
+
+if high>LongFirstProfit or low < longStopPrice
+    LongFirstProfit := na
+    LongSecondProfit := na
+    longStopPrice := na
+    longStopPrice2 := na
+
+
+//if high>LongSecondProfit or low < longStopPrice
+//    LongFirstProfit := na
+//    LongSecondProfit := na
+//    longStopPrice := na
+//    longStopPrice2 := na
+
+
+
+ 
+plot(longStopPrice, "SL", color.red, style = plot.style_circles,linewidth = 2)
+plot(LongFirstProfit, "TP", color.green, style = plot.style_circles,linewidth = 2)
+plot(LongSecondProfit, "TP2", color.green, style = plot.style_circles,linewidth = 2)
+
+

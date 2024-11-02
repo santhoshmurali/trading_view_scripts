@@ -1,0 +1,64 @@
+// This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © santhoshmurali
+
+//@version=5
+strategy("HFC PILOT EMA HMA AND QUICK PULLBACK", overlay=false, margin_long=100, margin_short=100,max_bars_back = 1000)
+
+debuglabel(price,lbltext,lblcolor,txtcolor)=>
+    label.new(bar_index,price,lbltext,color = lblcolor,textcolor = txtcolor,size = size.tiny,force_overlay = true)
+
+//@import all ncessary indiactors 
+//@ All about EMA
+var sma_grp = "SMA" 
+var color trend = color.aqua
+SMA_LENGTH = input.int(50,"SMA length", group = sma_grp)
+SMA_LOOKBACK_PERIOD  =   input.int(4,"Number consicutive times the master SMA is checked for HH or LL", group = sma_grp)
+SMA_ = ta.sma(close,SMA_LENGTH)
+fn_sma_trnd_up(n) =>  // Function to check if Master EMA is trending higher and price is tradeing higher than EMA
+    allHigher  = true
+    for i = 0 to n-2
+        if SMA_[i] <= SMA_[i+1] or close< SMA_[i]
+            allHigher := false
+    allHigher
+
+fn_sma_trnd_down(n) =>  // Function to check if Master EMA is trending higher and price is tradeing higher than EMA
+    allLower  = true
+    for i = 0 to n-2
+        if SMA_[i] > SMA_[i+1] or close> SMA_[i]
+            allLower := false
+    allLower
+
+
+if fn_sma_trnd_up(4)
+    trend := color.aqua
+else
+    trend := color.red
+
+
+//@ All about williams %r
+var grp_wr = "Williams %R"
+WILLAMS_RANGE_LENGTH = input.int(28, "Length Williams %R",group = grp_wr)
+WILLAMS_RANGE_LENGTH_SMOOTH_HMA = input.int(9,"Smoothing williams %R using HMA", group = grp_wr)
+will_ob_ = input.int(-20,"Williams Over Bought")
+will_os_ = input.int(-80,"Williams Over Sold")
+will_mid_ = input.int(-50,"Williams mid")
+willR_ = ta.wpr(WILLAMS_RANGE_LENGTH)
+willR_S_ = ta.hma(willR_,WILLAMS_RANGE_LENGTH_SMOOTH_HMA)
+
+MA_Confirmation_Up = fn_sma_trnd_up(SMA_LOOKBACK_PERIOD)
+MA_Confirmation_Down = fn_sma_trnd_down(SMA_LOOKBACK_PERIOD)
+
+if willR_S_[1] > will_os_ and willR_S_<=will_os_ and MA_Confirmation_Up //and willR_S_[0] < willR_S_[1]
+    debuglabel(low,"L",#2195f352,color.white) 
+
+if willR_S_[1] < will_ob_ and willR_S_>=will_ob_ and MA_Confirmation_Down //and willR_S_[0] < willR_S_[1]
+    debuglabel(low,"S",#f34b2152,color.white) 
+
+
+plot(SMA_,"SMA",color = trend, force_overlay = true)
+plot(willR_,"Williams %R",color = color.navy)
+plot(willR_S_,"Smooth Williams %R", color = color.black)
+hline(will_ob_,"Over Bought",color = color.green)
+hline(will_os_,"Over Sold", color = color.red)
+hline(will_mid_,"mid", color = color.gray)
+

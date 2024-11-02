@@ -1,0 +1,39 @@
+//@version=5
+indicator("Trend Sensitivity HMA", "HMA Sensitivty ", true, timeframe = 'D')
+sensitivityInput = input.int(1, "Sensitivity", minval = 1, tooltip = "Higher values make color changes less sensitive.")
+sensitivityInputHTF = input.int(15, "Sensitivity", minval = 1, tooltip = "Higher values make color changes less sensitive.")
+maInput = input(20,"MovingAverage")
+maHTFInput = input(300,"HTF MovingAverage")
+src = input(close, "Source")
+htfsrc = input(hl2, "HTF Source")
+htf = input.timeframe("15","Hight TF Moving Average")
+
+htf_hma = request.security(syminfo.tickerid, timeframe=htf, expression=ta.hma(close,maHTFInput))
+
+ma = ta.hma(src, maInput)
+maUp = ta.rising(ma, sensitivityInput)
+maDn = ta.falling(ma, sensitivityInput)
+
+maHTFUp = ta.rising(htf_hma, sensitivityInputHTF)
+maHTFDn = ta.falling(htf_hma, sensitivityInputHTF)
+
+// On first bar only, initialize color to gray
+var maColor = color.gray
+if maUp
+    // MA has risen for two bars in a row; make it lime.
+    maColor := color.rgb(126, 175, 137)
+else if maDn
+    // MA has fallen for two bars in a row; make it fuchsia.
+    maColor := color.rgb(49, 92, 158)
+
+
+var maHTFColor = color.gray
+if maHTFUp
+    // MA has risen for two bars in a row; make it lime.
+    maHTFColor := color.rgb(126, 175, 137, 49)
+else if maHTFDn
+    // MA has fallen for two bars in a row; make it fuchsia.
+    maHTFColor := color.rgb(49, 93, 158, 39)
+
+plot(ma, "HMA", maColor, 1)
+plot(htf_hma, "HTFHMA", maHTFColor, 2)

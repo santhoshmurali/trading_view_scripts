@@ -1,0 +1,37 @@
+// This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © santhoshmurali
+
+//@version=5
+indicator("HFC_HMA_BO","HFC_HMA_BO",overlay = true)
+
+debuglabel(price,lbltext,lblcolor,txtcolor)=>
+    label.new(bar_index,price,lbltext,color = lblcolor,textcolor = txtcolor,size = size.tiny,force_overlay = true)
+
+//All about HMA
+var grpHMA = "HMA"
+HMA_Length = input.int(250,"HMA Length", group = grpHMA)
+
+//All about Trading timoke
+var grpTradingTime = "Trading Time"
+start_hour  = input.int(9,"Strategy Start Hour",options = [9,10,11,12,13,14], group = grpTradingTime)
+start_min  = input.int(16,"Strategy Start Minute",options = [0,5,10,15,16,20,25,30,35,40,45,50,55],group = grpTradingTime)
+end_hour  = input.int(15,"Strategy End Hour",options = [10,11,12,13,14,15], group = grpTradingTime)
+end_min  = input.int(29,"Strategy End Minute",options = [0,5,10,15,20,25,29,30,35,40,45,50,55],group = grpTradingTime)
+
+strategy_start_time = timestamp(year, month, dayofmonth, start_hour, start_min)
+strategy_end_time = timestamp(year, month, dayofmonth, end_hour, end_min)
+
+// Current bar time
+current_time = time
+
+// Check if the current bar time is between the strategy start and end times
+in_trading_time = current_time >= strategy_start_time and current_time <= strategy_end_time
+
+HMA_ = ta.hma(close,HMA_Length)
+if HMA_[0] < HMA_[1] and ta.crossover(close,HMA_) and close > high[2] and close > open and in_trading_time
+    debuglabel(low,"L",#759c09,color.white)
+    message = ""
+if HMA_[0] > HMA_[1] and ta.crossunder(close,HMA_) and close < low[2] and close < open and in_trading_time
+    debuglabel(low,"S",#f01a2b,color.white)
+
+plot(HMA_, "HMA", color = color.red)

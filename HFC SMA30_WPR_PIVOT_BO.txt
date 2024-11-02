@@ -1,0 +1,97 @@
+// This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © santhoshmurali
+
+//@version=5
+indicator("HFC SMA30_WPR_PIVOT_BO","SMA30_WPR_PIVOT_BO",overlay = true)
+
+
+ADANIENT= input.string("NSE:ADANIENT","ADANIENT")
+ADANIPORTS= input.string("NSE:ADANIPORTS","ADANIPORTS")
+APOLLOHOSP= input.string("NSE:APOLLOHOSP","APOLLOHOSP")
+ASIANPAINT= input.string("NSE:ASIANPAINT","ASIANPAINT")
+AXISBANK= input.string("NSE:AXISBANK","AXISBANK")
+BAJAJ_AUTO= input.string("NSE:BAJAJ_AUTO","BAJAJ_AUTO")
+BAJFINANCE= input.string("NSE:BAJFINANCE","BAJFINANCE")
+BAJAJFINSV= input.string("NSE:BAJAJFINSV","BAJAJFINSV")
+BEL= input.string("NSE:BEL","BEL")
+BPCL= input.string("NSE:BPCL","BPCL")
+BHARTIARTL= input.string("NSE:BHARTIARTL","BHARTIARTL")
+BRITANNIA= input.string("NSE:BRITANNIA","BRITANNIA")
+CIPLA= input.string("NSE:CIPLA","CIPLA")
+COALINDIA= input.string("NSE:COALINDIA","COALINDIA")
+DRREDDY= input.string("NSE:DRREDDY","DRREDDY")
+EICHERMOT= input.string("NSE:EICHERMOT","EICHERMOT")
+GRASIM= input.string("NSE:GRASIM","GRASIM")
+HCLTECH= input.string("NSE:HCLTECH","HCLTECH")
+HDFCBANK= input.string("NSE:HDFCBANK","HDFCBANK")
+HDFCLIFE= input.string("NSE:HDFCLIFE","HDFCLIFE")
+HEROMOTOCO= input.string("NSE:HEROMOTOCO","HEROMOTOCO")
+HINDALCO= input.string("NSE:HINDALCO","HINDALCO")
+HINDUNILVR= input.string("NSE:HINDUNILVR","HINDUNILVR")
+ICICIBANK= input.string("NSE:ICICIBANK","ICICIBANK")
+ITC= input.string("NSE:ITC","ITC")
+
+//@ All about SMA
+var sma_grp = "SMA" 
+var color trend = color.aqua
+SMA_LENGTH = input.int(200,"SMA length", group = sma_grp)
+SMA_LOOKBACK_PERIOD  =   input.int(4,"Number consicutive times the master SMA is checked for HH or LL", group = sma_grp)
+
+//@ All about williams %r
+var grp_wr = "Williams %R"
+WILLAMS_RANGE_LENGTH = input.int(28, "Length Williams %R",group = grp_wr)
+WILLAMS_RANGE_LENGTH_SMOOTH_HMA = input.int(9,"Smoothing williams %R using HMA", group = grp_wr)
+will_ob_ = input.int(-20,"Williams Over Bought")
+will_os_ = input.int(-80,"Williams Over Sold")
+will_mid_ = input.int(-50,"Williams mid")
+
+fn_sma_trnd_up(n,c) =>  // Function to check if Master EMA is trending higher and price is tradeing higher than EMA
+    SMA_ = ta.sma(c,SMA_LENGTH)
+    signal  = 1
+    for i = 0 to n-2
+        if SMA_[i] <= SMA_[i+1] or close< SMA_[i]
+            signal := 0
+    signal
+
+fn_strategy_wpr() =>
+    willR_   = ta.wpr(WILLAMS_RANGE_LENGTH)
+    willR_S_ = ta.hma(willR_,WILLAMS_RANGE_LENGTH_SMOOTH_HMA)
+    signal = willR_S_[1] > will_os_ and willR_S_ <= will_os_ ? 1 : 0
+    
+
+fn_screener(_ticker)=>
+    message = ""
+    [wprsignal,masignal,_tickerclose] = request.security(_ticker,timeframe.period,[fn_strategy_wpr(),fn_sma_trnd_up(SMA_LOOKBACK_PERIOD,close),close])
+    if wprsignal == 1 and masignal==1
+        message := '{"chat_id" : "-1002402417006","text":"'+_ticker+' is ready for Long (Short term)"}'
+        alert(message,alert.freq_once_per_bar_close)
+    wprsignal + masignal
+
+ADANIENT_SIGNAL = fn_screener(ADANIENT)
+ADANIPORTS_SIGNAL = fn_screener(ADANIPORTS)
+APOLLOHOSP_SIGNAL = fn_screener(APOLLOHOSP)
+ASIANPAINT_SIGNAL = fn_screener(ASIANPAINT)
+AXISBANK_SIGNAL = fn_screener(AXISBANK)
+BAJAJ_AUTO_SIGNAL = fn_screener(BAJAJ_AUTO)
+BAJFINANCE_SIGNAL = fn_screener(BAJFINANCE)
+BAJAJFINSV_SIGNAL = fn_screener(BAJAJFINSV)
+BEL_SIGNAL = fn_screener(BEL)
+BPCL_SIGNAL = fn_screener(BPCL)
+BHARTIARTL_SIGNAL = fn_screener(BHARTIARTL)
+BRITANNIA_SIGNAL = fn_screener(BRITANNIA)
+CIPLA_SIGNAL = fn_screener(CIPLA)
+COALINDIA_SIGNAL = fn_screener(COALINDIA)
+DRREDDY_SIGNAL = fn_screener(DRREDDY)
+EICHERMOT_SIGNAL = fn_screener(EICHERMOT)
+GRASIM_SIGNAL = fn_screener(GRASIM)
+HCLTECH_SIGNAL = fn_screener(HCLTECH)
+HDFCBANK_SIGNAL = fn_screener(HDFCBANK)
+HDFCLIFE_SIGNAL = fn_screener(HDFCLIFE)
+HEROMOTOCO_SIGNAL = fn_screener(HEROMOTOCO)
+HINDALCO_SIGNAL = fn_screener(HINDALCO)
+HINDUNILVR_SIGNAL = fn_screener(HINDUNILVR)
+ICICIBANK_SIGNAL = fn_screener(ICICIBANK)
+ITC_SIGNAL = fn_screener(ITC)
+
+
+
